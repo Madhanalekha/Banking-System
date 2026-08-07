@@ -109,7 +109,7 @@ Database Name:
 banking_db
 ```
 
-Spring Boot connects to PostgreSQL using the configuration in `application.properties`.
+Spring Boot connects to PostgreSQL using the configuration in `application.yml`.
 
 ---
 
