@@ -1,7 +1,6 @@
 package com.gct.banking_system.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateBeneficiaryRequest {
+public class UpdateBeneficiaryRequest {
 
     @NotBlank(message = "Beneficiary name is required")
     private String name;
@@ -22,8 +21,5 @@ public class CreateBeneficiaryRequest {
 
     @NotBlank(message = "IFSC code is required")
     private String ifscCode;
-
-    @NotNull(message = "Customer ID is required")
-    private Long customerId;
 
 }

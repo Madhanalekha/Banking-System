@@ -1,11 +1,10 @@
 package com.gct.banking_system.entity;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,4 +35,8 @@ public class Customer {
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<Account> accounts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<Beneficiary> beneficiaries = new ArrayList<>();
 }
