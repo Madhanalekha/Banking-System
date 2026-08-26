@@ -15,9 +15,50 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Duplicate Account Exception
+     */
     @ExceptionHandler(DuplicateAccountException.class)
     public ResponseEntity<ApiError> handleDuplicateAccountException(
             DuplicateAccountException ex,
+            HttpServletRequest request) {
+
+        ApiError error = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    /**
+     * Duplicate Customer Exception
+     */
+    @ExceptionHandler(DuplicateCustomerException.class)
+    public ResponseEntity<ApiError> handleDuplicateCustomerException(
+            DuplicateCustomerException ex,
+            HttpServletRequest request) {
+
+        ApiError error = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    /**
+     * Duplicate Beneficiary Exception
+     */
+    @ExceptionHandler(DuplicateBeneficiaryException.class)
+    public ResponseEntity<ApiError> handleDuplicateBeneficiaryException(
+            DuplicateBeneficiaryException ex,
             HttpServletRequest request) {
 
         ApiError error = new ApiError(
@@ -51,22 +92,22 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Duplicate Customer Exception
+     * Insufficient Balance Exception
      */
-    @ExceptionHandler(DuplicateCustomerException.class)
-    public ResponseEntity<ApiError> handleDuplicateCustomerException(
-            DuplicateCustomerException ex,
+    @ExceptionHandler(InsufficientBalanceException.class)
+    public ResponseEntity<ApiError> handleInsufficientBalanceException(
+            InsufficientBalanceException ex,
             HttpServletRequest request) {
 
         ApiError error = new ApiError(
                 LocalDateTime.now(),
-                HttpStatus.CONFLICT.value(),
-                "Conflict",
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
                 ex.getMessage(),
                 request.getRequestURI()
         );
 
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     /**
