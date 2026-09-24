@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,8 +22,10 @@ public class TransactionController {
     /**
      * Create Transaction (DEPOSIT / WITHDRAW)
      * POST /api/accounts/{accountId}/transactions
+     * Requires ADMIN or MAKER role
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'admin', 'MAKER', 'maker')")
     public ResponseEntity<TransactionResponse> createTransaction(
             @PathVariable Long accountId,
             @Valid @RequestBody CreateTransactionRequest request) {
@@ -35,8 +38,10 @@ public class TransactionController {
     /**
      * Get All Transactions for an Account
      * GET /api/accounts/{accountId}/transactions
+     * Requires authenticated user
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<TransactionResponse>> getTransactions(
             @PathVariable Long accountId) {
 

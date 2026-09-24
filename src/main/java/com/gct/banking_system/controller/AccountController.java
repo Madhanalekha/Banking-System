@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,8 +22,10 @@ public class AccountController {
 
     /**
      * Create Account
+     * Requires ADMIN or MAKER role
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'admin', 'MAKER', 'maker')")
     public ResponseEntity<AccountResponse> createAccount(
             @Valid @RequestBody CreateAccountRequest request) {
 
@@ -33,8 +36,10 @@ public class AccountController {
 
     /**
      * Get All Accounts
+     * Requires authenticated user
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<AccountResponse>> getAllAccounts() {
 
         return ResponseEntity.ok(accountService.getAllAccounts());
@@ -42,8 +47,10 @@ public class AccountController {
 
     /**
      * Get Account By Id
+     * Requires authenticated user
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AccountResponse> getAccountById(
             @PathVariable Long id) {
 
@@ -52,8 +59,10 @@ public class AccountController {
 
     /**
      * Update Account
+     * Requires ADMIN role
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'admin')")
     public ResponseEntity<AccountResponse> updateAccount(
             @PathVariable Long id,
             @Valid @RequestBody UpdateAccountRequest request) {
@@ -64,8 +73,10 @@ public class AccountController {
 
     /**
      * Delete Account
+     * Requires ADMIN role
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'admin')")
     public ResponseEntity<String> deleteAccount(
             @PathVariable Long id) {
 

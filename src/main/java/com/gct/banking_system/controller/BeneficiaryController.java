@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,8 +23,10 @@ public class BeneficiaryController {
     /**
      * Create Beneficiary
      * POST /api/beneficiaries
+     * Requires authenticated user
      */
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BeneficiaryResponse> createBeneficiary(
             @Valid @RequestBody CreateBeneficiaryRequest request) {
 
@@ -35,8 +38,10 @@ public class BeneficiaryController {
     /**
      * Get All Beneficiaries
      * GET /api/beneficiaries
+     * Requires authenticated user
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<BeneficiaryResponse>> getAllBeneficiaries() {
 
         return ResponseEntity.ok(beneficiaryService.getAllBeneficiaries());
@@ -45,8 +50,10 @@ public class BeneficiaryController {
     /**
      * Get Beneficiary By Id
      * GET /api/beneficiaries/{id}
+     * Requires authenticated user
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BeneficiaryResponse> getBeneficiaryById(
             @PathVariable Long id) {
 
@@ -56,8 +63,10 @@ public class BeneficiaryController {
     /**
      * Update Beneficiary
      * PUT /api/beneficiaries/{id}
+     * Requires ADMIN or MAKER role
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'admin', 'MAKER', 'maker')")
     public ResponseEntity<BeneficiaryResponse> updateBeneficiary(
             @PathVariable Long id,
             @Valid @RequestBody UpdateBeneficiaryRequest request) {
@@ -68,8 +77,10 @@ public class BeneficiaryController {
     /**
      * Delete Beneficiary
      * DELETE /api/beneficiaries/{id}
+     * Requires ADMIN or CHECKER role
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'admin', 'CHECKER', 'checker')")
     public ResponseEntity<String> deleteBeneficiary(
             @PathVariable Long id) {
 

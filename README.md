@@ -4,101 +4,264 @@ A robust, enterprise-ready **Spring Boot Banking REST API** developed as part of
 
 ---
 
-## Table of Contents
+### Table of Contents
 1. [Overview & Features](#overview--features)
 2. [Technology Stack](#technology-stack)
 3. [Architecture & Design Principles](#architecture--design-principles)
-4. [Project Structure](#project-structure)
-5. [Database Design & Entity Relationships](#database-design--entity-relationships)
-6. [API Documentation & Endpoints](#api-documentation--endpoints)
-7. [Setup & Execution Guide](#setup--execution-guide)
-8. [Postman Testing Guide (21 Test Scenarios)](#postman-testing-guide-21-test-scenarios)
-9. [Exception Handling & Validation](#exception-handling--validation)
-10. [Banking Ledger & Account Balance Design](#banking-ledger--account-balance-design)
-11. [Git Disciplines & Commit History](#git-disciplines--commit-history)
-12. [Future Improvements](#future-improvements)
+4. [Security & Role-Based Access Control (RBAC)](#security--role-based-access-control-rbac)
+5. [Keycloak Setup & Configuration Guide](#keycloak-setup--configuration-guide)
+6. [Project Structure](#project-structure)
+7. [Database Design & Entity Relationships](#database-design--entity-relationships)
+8. [API Documentation & Endpoints](#api-documentation--endpoints)
+9. [Setup & Execution Guide](#setup--execution-guide)
+10. [Frontend Web Application (Next.js)](#frontend-web-application-nextjs)
+11. [Postman & Token Testing Guide](#postman--token-testing-guide)
+12. [Exception Handling & Validation](#exception-handling--validation)
+13. [Banking Ledger & Account Balance Design](#banking-ledger--account-balance-design)
+14. [Git Disciplines & Commit History](#git-disciplines--commit-history)
+15. [Future Improvements](#future-improvements)
 
 ---
 
 ## Overview & Features
 
-The **GCT Banking System** is designed with standard enterprise software engineering practices following layered architecture (Controller $\to$ Service $\to$ Repository), strict separation of concerns, complete encapsulation of entity persistence using Data Transfer Objects (DTOs), and centralized exception handling.
+The **GCT Banking System** is designed with standard enterprise software engineering practices following layered architecture (Controller $\to$ Service $\to$ Repository), strict separation of concerns, complete encapsulation of entity persistence using Data Transfer Objects (DTOs), centralized exception handling, and **production-ready OAuth2 / OpenID Connect security with Keycloak**.
 
 ### Core Features:
-- **System Monitoring**: Liveness, database connectivity status (`/health/db`), and metadata APIs.
+- **Enterprise Security & Identity**:
+  - Keycloak OpenID Connect / OAuth2 Resource Server integration.
+  - JWT token verification via Keycloak JWK set (`/protocol/openid-connect/certs`).
+  - Granular **Role-Based Access Control (RBAC)** across `ADMIN`, `MAKER`, and `CHECKER` roles.
+  - Double-layered protection: Filter-chain URL security rules + method-level `@PreAuthorize` annotations.
+- **System Monitoring**: Liveness, database connectivity status (`/health/db`), and runtime metadata APIs.
 - **Customer Management**: Full CRUD operations with uniqueness constraints on email.
 - **Account Management**: Create and manage savings/current accounts linked to registered customers.
 - **Transaction Processing**:
-  - **Deposit**: Adds funds to account balance, logs timestamped transaction.
-  - **Withdrawal**: Verifies sufficient funds, deducts balance safely, or rejects with `InsufficientBalanceException`.
+  - **Deposit**: Adds funds to account balance, logs timestamped transaction ledger.
+  - **Withdrawal**: Verifies sufficient funds, deducts balance atomically, or rejects with `InsufficientBalanceException`.
   - **Audit History**: Retrieve complete chronologically ordered ledger for any account.
 - **Beneficiary Management**: Create and manage transfer beneficiaries linked to customers, preventing duplicate beneficiary accounts per customer.
+- **Next.js Web Portal**: Modern React frontend with Keycloak authentication flow, dark mode aesthetics, dashboard KPIs, and role-based UI views.
 - **Input Validation**: Standardized Jakarta Bean Validation with descriptive error messages.
-- **Centralized Error Handling**: Standardized HTTP status codes (200, 201, 400, 404, 409, 500) and structured JSON error responses.
+- **Centralized Error Handling**: Standardized HTTP status codes (200, 201, 400, 401, 403, 404, 409, 500) and structured JSON error responses.
 
 ---
 
 ## Technology Stack
 
+### Backend
 - **Java**: 17 (LTS)
 - **Framework**: Spring Boot 4.0.x / 3.x (Spring WebMVC, Spring Data JPA)
-- **Database**: PostgreSQL
+- **Security**: Spring Security, Spring Boot OAuth2 Resource Server (JWT)
+- **Identity & Access Management (IAM)**: Keycloak 24+ (OAuth2 / OIDC)
+- **Database**: PostgreSQL 12+
 - **ORM / Persistence**: Hibernate / JPA
 - **Boilerplate Reduction**: Project Lombok
 - **Validation**: Jakarta Validation API & Hibernate Validator
 - **Build Tool**: Apache Maven (Maven Wrapper included)
-- **API Testing**: Postman
+
+### Frontend
+- **Framework**: Next.js 15+ (App Router), React 19
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **Authentication**: OIDC OAuth2 Authorization Code Flow with PKCE via Keycloak
+
+### DevOps & Tooling
+- **Containers**: Docker & Docker Compose (PostgreSQL & Keycloak)
+- **API Testing**: Postman & cURL
 
 ---
 
 ## Architecture & Design Principles
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Client / Postman                       │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ HTTP JSON Request / Response
-┌──────────────────────────────▼──────────────────────────────┐
-│                     Controller Layer                        │
-│   (CustomerController, AccountController,                   │
-│    TransactionController, BeneficiaryController,            │
-│    SystemController)                                        │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ DTOs (Validated by @Valid)
-┌──────────────────────────────▼──────────────────────────────┐
-│                       Service Layer                         │
-│   (CustomerService, AccountService,                         │
-│    TransactionService, BeneficiaryService)                  │
-│    * Contains business rules, balance validations, mapping  │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ Entities (JPA Model)
-┌──────────────────────────────▼──────────────────────────────┐
-│                     Repository Layer                        │
-│   (CustomerRepository, AccountRepository,                   │
-│    TransactionRepository, BeneficiaryRepository)            │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ SQL / JDBC
-┌──────────────────────────────▼──────────────────────────────┐
-│                    PostgreSQL Database                      │
-│   (customers, accounts, transactions, beneficiaries)        │
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│               Keycloak IAM (Port 8081)                 │
+│        Realm: bank-app | Client: bank-app              │
+└───────────────────────────┬────────────────────────────┘
+                            │ 1. User Authentication
+                            │ 2. Issue JWT (Roles: ADMIN, MAKER, CHECKER, USER)
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│           Next.js Frontend (Port 3000)                 │
+│        (Token Storage & Bearer Header Injection)       │
+└───────────────────────────┬────────────────────────────┘
+                            │ HTTP Requests with Bearer JWT
+┌───────────────────────────▼────────────────────────────┐
+│          Spring Boot Resource Server (Port 8080)       │
+│                                                        │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │ SecurityFilterChain (Stateless, CORS, 401/403)   │  │
+│  └────────────────────────┬─────────────────────────┘  │
+│                           │                            │
+│  ┌────────────────────────▼─────────────────────────┐  │
+│  │ JwtAuthConverter (Extracts realm & client roles) │  │
+│  └────────────────────────┬─────────────────────────┘  │
+│                           │                            │
+│  ┌────────────────────────▼─────────────────────────┐  │
+│  │ Controller Layer (@PreAuthorize Role Security)   │  │
+│  │ (Account, Customer, Transaction, Beneficiary)    │  │
+│  └────────────────────────┬─────────────────────────┘  │
+│                           │ DTOs                       │
+│  ┌────────────────────────▼─────────────────────────┐  │
+│  │ Service Layer (@Transactional Business Logic)    │  │
+│  └────────────────────────┬─────────────────────────┘  │
+│                           │ Entities                   │
+│  ┌────────────────────────▼─────────────────────────┐  │
+│  │ Repository Layer (Spring Data JPA)               │  │
+│  └────────────────────────┬─────────────────────────┘  │
+└───────────────────────────┼────────────────────────────┘
+                            │ SQL / JDBC
+┌───────────────────────────▼────────────────────────────┐
+│                 PostgreSQL Database                    │
+│   (customers, accounts, transactions, beneficiaries)   │
+└────────────────────────────────────────────────────────┘
 ```
 
-- **Constructor Injection**: All dependencies are injected via constructor using Lombok's `@RequiredArgsConstructor`.
-- **DTO Encapsulation**: Domain entities (`Customer`, `Account`, `Transaction`, `Beneficiary`) are never directly returned over HTTP; DTOs decouple internal schema from client contracts and eliminate circular serialization issues.
-- **Transaction Atomicity**: Financial operations in `TransactionServiceImpl` are annotated with `@Transactional` to guarantee ACID guarantees.
+- **Stateless Authentication**: No HTTP sessions are stored on the server (`SessionCreationPolicy.STATELESS`); each request is authenticated through an asymmetric signature check of the Keycloak JWT using public JWK certs.
+- **Double Defense-in-Depth**: Both URL pattern matching in `SecurityFilterChain` AND method-level `@PreAuthorize` enforce role requirements.
+- **DTO Encapsulation**: Domain entities are decoupled from HTTP contracts to avoid circular references and over-posting.
+- **ACID Financial Transactions**: Balance modifications run inside `@Transactional` blocks to ensure strict ledger consistency.
+
+---
+
+## Security & Role-Based Access Control (RBAC)
+
+### 1. User Roles & Banking Responsibilities
+
+| Role | Keycloak Role Name | Responsibilities / Permissions |
+| :--- | :--- | :--- |
+| **Admin** | `admin` / `ADMIN` | Full administrative control: Create, update, delete accounts; delete customers; update/delete beneficiaries; system health. |
+| **Maker** | `maker` / `MAKER` | Operational branch maker: Create accounts, create customers, execute financial transactions (Deposit / Withdraw), add beneficiaries. |
+| **Checker** | `checker` / `CHECKER` | Supervisory auditor: Audit and verify accounts and customers; review/delete beneficiaries; read audit ledgers. |
+
+
+### 2. Role-Based Permissions Matrix
+
+| Endpoint | HTTP Method | Allowed Roles / Auth Level | Description |
+| :--- | :--- | :--- | :--- |
+| `/health/**`, `/info` | `GET` | Public (`permitAll`) | System status & database connectivity |
+| `/api/accounts` | `POST` | `ADMIN`, `MAKER` | Open a new bank account |
+| `/api/accounts` | `GET` | `Authenticated` | List all bank accounts |
+| `/api/accounts/{id}` | `GET` | `Authenticated` | View account details |
+| `/api/accounts/{id}` | `PUT` | `ADMIN` | Update account configurations |
+| `/api/accounts/{id}` | `DELETE` | `ADMIN` | Delete bank account |
+| `/api/customers` | `POST` | `ADMIN`, `MAKER` | Register a new customer |
+| `/api/customers` | `GET` | `Authenticated` | List registered customers |
+| `/api/customers/{id}` | `GET` | `Authenticated` | View customer profile |
+| `/api/customers/{id}` | `PUT` | `ADMIN`, `MAKER` | Update customer profile |
+| `/api/customers/{id}` | `DELETE` | `ADMIN` | Remove customer profile |
+| `/api/accounts/{id}/transactions` | `POST` | `ADMIN`, `MAKER` | Deposit or Withdraw funds |
+| `/api/accounts/{id}/transactions` | `GET` | `Authenticated` | Fetch transaction audit ledger |
+| `/api/beneficiaries` | `POST` | `Authenticated` | Add a transfer beneficiary |
+| `/api/beneficiaries` | `GET` | `Authenticated` | List beneficiaries |
+| `/api/beneficiaries/{id}` | `GET` | `Authenticated` | View beneficiary details |
+| `/api/beneficiaries/{id}` | `PUT` | `ADMIN`, `MAKER` | Update beneficiary info |
+| `/api/beneficiaries/{id}` | `DELETE` | `ADMIN`, `CHECKER` | Remove beneficiary |
+
+### 3. Keycloak JWT Role Extraction (`JwtAuthConverter`)
+
+Keycloak embeds roles inside the JWT in `realm_access.roles` (and optionally in `resource_access.<client>.roles`). Spring Security expects authorities prefixed with `ROLE_`. 
+
+The custom [JwtAuthConverter.java](file:///c:/springboot/banking-system%20-%20Copy/src/main/java/com/gct/banking_system/config/JwtAuthConverter.java) automatically:
+1. Extracts roles from `realm_access.roles`.
+2. Extracts roles from `resource_access.*.roles`.
+3. Emits both standard and uppercase role authorities (e.g. `ROLE_admin` and `ROLE_ADMIN`), ensuring case-insensitive role compatibility across annotations like `@PreAuthorize("hasRole('ADMIN')")` or `hasAnyRole('admin', 'maker')`.
+4. Extracts `preferred_username` as the Spring Security `Principal` name.
+
+---
+
+## Keycloak Setup & Configuration Guide
+
+### 1. Keycloak Server Details
+- **Server URL**: `http://localhost:8081`
+- **Realm Name**: `bank-app`
+- **Client ID**: `bank-app`
+- **Client Type**: OpenID Connect / Public Client
+
+### 2. Client Access Settings (Admin Console)
+Navigate to **Clients** $\to$ **bank-app** $\to$ **Settings**:
+- **Client Authentication**: `Off` (Public client for Single-Page Applications)
+- **Standard Flow**: `Enabled` (Authorization Code Flow)
+- **Direct Access Grants**: `Enabled` (For CLI / Postman testing)
+- **Root URL**: `http://localhost:3000`
+- **Home URL**: `http://localhost:3000`
+- **Valid redirect URIs**:
+  ```
+  http://localhost:3000/*
+  http://localhost:3000/login
+  ```
+- **Valid post logout redirect URIs**:
+  ```
+  http://localhost:3000/*
+  http://localhost:3000/login
+  ```
+- **Web origins**:
+  ```
+  http://localhost:3000
+  +
+  ```
+
+### 3. Realm Roles Setup
+Navigate to **Realm Roles** and create:
+- `admin`
+- `maker`
+- `checker`
+
+
+### 4. Creating Test Users & Assigning Roles
+Navigate to **Users** $\to$ **Add User**:
+1. **Admin User**:
+   - Username: `admin-user`
+   - Email: `admin@bank.com`
+   - Set password under **Credentials** tab (turn off *Temporary*).
+   - Assign Role under **Role mapping**: `admin`.
+2. **Maker User**:
+   - Username: `maker-user`
+   - Role mapping: `maker`.
+3. **Checker User**:
+   - Username: `checker-user`
+   - Role mapping: `checker`.
 
 ---
 
 ## Project Structure
 
 ```
-com.gct.banking_system
-├── BankingSystemApplication.java
-├── controller
-│   ├── AccountController.java
-│   ├── BeneficiaryController.java
-│   ├── CustomerController.java
+banking-system
+├── src/main/java/com/gct/banking_system
+│   ├── BankingSystemApplication.java
+│   ├── config
+│   │   ├── CorsConfig.java            # Configures CORS origins for Next.js (port 3000)
+│   │   ├── JwtAuthConverter.java      # Maps Keycloak realm & client roles to Spring authorities
+│   │   └── SecurityConfig.java        # SecurityFilterChain, OAuth2 Resource Server, 401/403 handlers
+│   ├── controller
+│   │   ├── AccountController.java     # Protected by @PreAuthorize for Account CRUD
+│   │   ├── BeneficiaryController.java # Protected by @PreAuthorize for Beneficiary management
+│   │   ├── CustomerController.java    # Protected by @PreAuthorize for Customer CRUD
+│   │   ├── SystemController.java      # Public health and metadata endpoints
+│   │   └── TransactionController.java # Protected by @PreAuthorize for Deposit & Withdrawal
+│   ├── dto                            # Request and Response transfer objects
+│   ├── entity                         # JPA Entities (Customer, Account, Transaction, Beneficiary)
+│   ├── exception                      # Centralized GlobalExceptionHandler & custom exceptions
+│   ├── repository                     # Spring Data JPA Repositories
+│   └── service                        # Business logic layer with @Transactional guarantees
+│
+├── banking-frontend                   # Next.js 15 + React 19 Frontend Web Portal
+│   ├── src
+│   │   ├── app                        # Next.js App Router (login, accounts, transactions, etc.)
+│   │   ├── components                 # UI Components (Navbar, Sidebar, Modal, KPI Cards)
+│   │   ├── context                    # AuthContext (Keycloak code exchange & token management)
+│   │   ├── services                   # Axios API service with Bearer token interceptor
+│   │   └── types                      # TypeScript interfaces and auth types
+│   ├── package.json
+│   └── next.config.mjs
+│
+├── docker-compose.yaml                # Multi-container orchestration (Postgres + Keycloak)
+├── pom.xml                            # Maven build specification
+└── README.md
+```tomerController.java
 │   ├── SystemController.java
 │   └── TransactionController.java
 ├── dto

@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,8 +23,10 @@ public class CustomerController {
     /**
      * Create Customer
      * POST /api/customers
+     * Requires ADMIN or MAKER role
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'admin', 'MAKER', 'maker')")
     public ResponseEntity<CustomerResponse> createCustomer(
             @Valid @RequestBody CreateCustomerRequest request) {
 
@@ -35,8 +38,10 @@ public class CustomerController {
     /**
      * Get All Customers
      * GET /api/customers
+     * Requires authenticated user
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<CustomerResponse>> getAllCustomers() {
 
         return ResponseEntity.ok(customerService.getAllCustomers());
@@ -45,8 +50,10 @@ public class CustomerController {
     /**
      * Get Customer By Id
      * GET /api/customers/{id}
+     * Requires authenticated user
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CustomerResponse> getCustomerById(
             @PathVariable Long id) {
 
@@ -56,8 +63,10 @@ public class CustomerController {
     /**
      * Update Customer
      * PUT /api/customers/{id}
+     * Requires ADMIN or MAKER role
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'admin', 'MAKER', 'maker')")
     public ResponseEntity<CustomerResponse> updateCustomer(
             @PathVariable Long id,
             @Valid @RequestBody UpdateCustomerRequest request) {
@@ -69,8 +78,10 @@ public class CustomerController {
     /**
      * Delete Customer
      * DELETE /api/customers/{id}
+     * Requires ADMIN role
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'admin')")
     public ResponseEntity<String> deleteCustomer(
             @PathVariable Long id) {
 
