@@ -18,9 +18,8 @@ This frontend communicates directly with the **Spring Boot Core Banking REST API
 9. [TanStack React Query Architecture](#tanstack-react-query-architecture)
 10. [Forms & Client-Side Validation (Zod)](#forms--client-side-validation-zod)
 11. [Centralized Error Handling](#centralized-error-handling)
-12. [Express Middleware Learning Module](#express-middleware-learning-module)
-13. [Authentication & Security](#authentication--security)
-14. [End-to-End Testing Guide](#end-to-end-testing-guide)
+12. [Authentication & Security](#authentication--security)
+13. [End-to-End Testing Guide](#end-to-end-testing-guide)
 
 ---
 
@@ -266,19 +265,6 @@ Forms utilize React Hook Form connected with Zod schemas:
 - **Account Form**: Customer selection, Account Number, Account Type (`SAVINGS` / `CURRENT`), Initial balance $\ge 0$.
 - **Transaction Form**: Account selection, Transaction Type (`DEPOSIT` / `WITHDRAW`), Amount $> 0$.
 - **Beneficiary Form**: Customer selection, Payee Name, Account Number, Bank Name, IFSC code.
-
----
-
-## Express Middleware Learning Module
-
-As part of this week's learning requirements, an educational Express middleware example is included in:
-- [`middleware-examples/express-middleware-demo.js`](file:///C:/springboot/banking-system%20-%20Copy/banking-frontend/middleware-examples/express-middleware-demo.js): Runnable Node.js script demonstrating Request Logging, Latency Timing, Request Payload Validation, and Error-Handling middleware (`(err, req, res, next)`).
-- [`middleware-examples/middleware-comparison.md`](file:///C:/springboot/banking-system%20-%20Copy/banking-frontend/middleware-examples/middleware-comparison.md): Comprehensive architectural guide comparing Express Middleware with Next.js Edge Middleware.
-
-To run the standalone Express middleware demo:
-```bash
-node middleware-examples/express-middleware-demo.js
-```
 
 ---
 
