@@ -11,13 +11,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for token in cookies or — for client-side localStorage, we use a cookie approach.
-  // Since localStorage is not accessible in middleware, we check a cookie
-  // that we'll set on login and clear on logout.
   const authCookie = request.cookies.get("bank_auth_session");
 
   if (!authCookie?.value) {
-    // Not authenticated — redirect to login (not sessionExpired)
     const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }

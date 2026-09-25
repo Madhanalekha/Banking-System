@@ -120,14 +120,16 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* New Transaction Button */}
-          <Link
-            href="/transactions/new"
-            className="inline-flex items-center px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm hover:shadow transition-all"
-          >
-            <ArrowUpRight className="w-4 h-4 mr-1" />
-            <span className="hidden sm:inline">New</span> Transaction
-          </Link>
+          {/* New Transaction Button - hidden for Checker */}
+          {!isChecker || isAdmin ? (
+            <Link
+              href="/transactions/new"
+              className="inline-flex items-center px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm hover:shadow transition-all"
+            >
+              <ArrowUpRight className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">New</span> Transaction
+            </Link>
+          ) : null}
 
           <div className="h-5 w-px bg-slate-200 hidden sm:block"></div>
 

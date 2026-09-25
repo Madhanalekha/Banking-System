@@ -11,6 +11,8 @@ import {
   TrendingUp,
   Landmark,
   ArrowRight,
+  Shield,
+  Eye,
 } from "lucide-react";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useAccounts } from "@/hooks/useAccounts";
@@ -18,6 +20,7 @@ import { useBeneficiaries } from "@/hooks/useBeneficiaries";
 import { Loading } from "@/components/Loading";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { StatusBadge } from "@/components/StatusBadge";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DashboardPage() {
   const {
@@ -36,6 +39,24 @@ export default function DashboardPage() {
     data: beneficiaries,
     isLoading: loadingBeneficiaries,
   } = useBeneficiaries();
+
+  const { isAdmin, isMaker, isChecker, user, roles } = useAuth();
+
+  // Role-based permissions
+  const canCreate = isAdmin || isMaker;
+  const canTransact = isAdmin || isMaker;
+  const isReadOnly = isChecker && !isAdmin && !isMaker;
+
+  // Role display config
+  const roleLabel = isAdmin ? "Admin" : isMaker ? "Maker" : isChecker ? "Checker" : roles[0] || "User";
+  const roleBannerStyle = isAdmin
+    ? "bg-rose-50 border-rose-200 text-rose-800"
+    : isMaker
+    ? "bg-indigo-50 border-indigo-200 text-indigo-800"
+    : isChecker
+    ? "bg-amber-50 border-amber-200 text-amber-800"
+    : "bg-slate-50 border-slate-200 text-slate-700";
+  const roleIconStyle = isAdmin ? "text-rose-500" : isMaker ? "text-indigo-500" : isChecker ? "text-amber-500" : "text-slate-400";
 
   const totalBalance = accounts
     ? accounts.reduce((acc, account) => acc + (account.balance || 0), 0)
@@ -59,12 +80,30 @@ export default function DashboardPage() {
             Bank App Control Center
           </h1>
           <p className="mt-2 text-slate-300 text-sm sm:text-base leading-relaxed">
-            Manage customer accounts, process deposit and withdrawal transactions, and register payees with full audit integrity.
+            {isAdmin
+              ? "Full administrative access: manage customers, accounts, transactions, and system settings."
+              : isMaker
+              ? "Maker access: create customers, open accounts, execute deposits & withdrawals, and add beneficiaries."
+              : isChecker
+              ? "Checker (Auditor) access: review accounts, audit transaction ledgers, and manage beneficiary removals."
+              : "Manage customer accounts, process deposit and withdrawal transactions, and register payees with full audit integrity."}
           </p>
         </div>
         <div className="absolute right-6 bottom-4 opacity-10 hidden lg:block">
           <Landmark className="w-64 h-64 text-white" />
         </div>
+      </div>
+
+      {/* Active Role Banner */}
+      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium ${roleBannerStyle}`}>
+        <Shield className={`w-4 h-4 flex-shrink-0 ${roleIconStyle}`} />
+        <span>
+          Signed in as <strong>{user?.fullName || user?.username}</strong> &mdash; Role:{" "}
+          <strong className="uppercase tracking-wide">{roleLabel}</strong>
+          {isReadOnly && " · Read-only access (Auditor)"}
+          {canTransact && " · Can execute Deposits & Withdrawals"}
+          {isAdmin && " · Full administrative control"}
+        </span>
       </div>
 
       {customerError && <ErrorMessage error={customerError} title="Failed to load customer metrics" />}
@@ -162,49 +201,104 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Action Hub */}
+      {/* Quick Action Hub — role-filtered */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-        <h2 className="text-base font-bold text-slate-900 mb-4">Core Actions</h2>
+        <h2 className="text-base font-bold text-slate-900 mb-1">Quick Actions</h2>
+        <p className="text-xs text-slate-400 mb-4">
+          {isAdmin ? "Full control — all actions available."
+            : isMaker ? "Maker role — create and transact."
+            : isChecker ? "Checker role — audit and review only."
+            : "Available actions for your role."}
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link
-            href="/customers/new"
-            className="flex items-center p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
-              <PlusCircle className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-800">Add Customer</p>
-              <p className="text-xs text-slate-500">Register new customer</p>
-            </div>
-          </Link>
+          {/* Add Customer: ADMIN, MAKER */}
+          {canCreate ? (
+            <Link
+              href="/customers/new"
+              className="flex items-center p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
+                <PlusCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Add Customer</p>
+                <p className="text-xs text-slate-500">Register new customer</p>
+              </div>
+            </Link>
+          ) : (
+            <Link
+              href="/customers"
+              className="flex items-center p-4 rounded-xl border border-slate-200 hover:border-amber-400 hover:bg-amber-50/40 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
+                <Eye className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Audit Customers</p>
+                <p className="text-xs text-slate-500">Review customer records</p>
+              </div>
+            </Link>
+          )}
 
-          <Link
-            href="/accounts/new"
-            className="flex items-center p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
-              <PlusCircle className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-800">Open Account</p>
-              <p className="text-xs text-slate-500">Savings or Current</p>
-            </div>
-          </Link>
+          {/* Open Account: ADMIN, MAKER */}
+          {canCreate ? (
+            <Link
+              href="/accounts/new"
+              className="flex items-center p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
+                <PlusCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Open Account</p>
+                <p className="text-xs text-slate-500">Savings or Current</p>
+              </div>
+            </Link>
+          ) : (
+            <Link
+              href="/accounts"
+              className="flex items-center p-4 rounded-xl border border-slate-200 hover:border-amber-400 hover:bg-amber-50/40 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
+                <Eye className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Audit Accounts</p>
+                <p className="text-xs text-slate-500">Review account ledgers</p>
+              </div>
+            </Link>
+          )}
 
-          <Link
-            href="/transactions/new"
-            className="flex items-center p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
-              <ArrowLeftRight className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-800">Deposit / Withdraw</p>
-              <p className="text-xs text-slate-500">Execute financial ledger</p>
-            </div>
-          </Link>
+          {/* Deposit / Withdraw: ADMIN, MAKER */}
+          {canTransact ? (
+            <Link
+              href="/transactions/new"
+              className="flex items-center p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
+                <ArrowLeftRight className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Deposit / Withdraw</p>
+                <p className="text-xs text-slate-500">Execute financial ledger</p>
+              </div>
+            </Link>
+          ) : (
+            <Link
+              href="/transactions"
+              className="flex items-center p-4 rounded-xl border border-slate-200 hover:border-amber-400 hover:bg-amber-50/40 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
+                <Eye className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Audit Transactions</p>
+                <p className="text-xs text-slate-500">Review transaction ledger</p>
+              </div>
+            </Link>
+          )}
 
+          {/* Add Beneficiary: All authenticated users */}
           <Link
             href="/beneficiaries/new"
             className="flex items-center p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all group"

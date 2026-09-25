@@ -25,9 +25,13 @@ export default function TransactionsOverviewPage() {
     null
   );
 
-  // Automatically select the first account if available and none is selected
-  const activeAccountId =
-    selectedAccountId || (accounts && accounts.length > 0 ? accounts[0].id : 0);
+  // Validate selectedAccountId against currently loaded accounts; fallback to first available
+  const validAccount = accounts?.find((acc) => acc.id === selectedAccountId);
+  const activeAccountId = validAccount
+    ? validAccount.id
+    : accounts && accounts.length > 0
+    ? accounts[0].id
+    : 0;
 
   const selectedAccount = accounts?.find((acc) => acc.id === activeAccountId);
 

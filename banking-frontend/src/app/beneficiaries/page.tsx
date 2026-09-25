@@ -10,16 +10,27 @@ import {
   Trash2,
   Eye,
   User,
+  Lock,
 } from "lucide-react";
 import { useBeneficiaries, useDeleteBeneficiary } from "@/hooks/useBeneficiaries";
 import { Loading } from "@/components/Loading";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useAuth } from "@/context/AuthContext";
 
 export default function BeneficiariesListPage() {
   const { data: beneficiaries, isLoading, error, refetch } = useBeneficiaries();
   const deleteBeneficiaryMutation = useDeleteBeneficiary();
+  const { isAdmin, isMaker, isChecker } = useAuth();
+
+  // Role-based permissions (per backend SecurityConfig):
+  // POST /api/beneficiaries   → Authenticated (all roles)
+  // PUT /api/beneficiaries/** → ADMIN, MAKER
+  // DELETE /api/beneficiaries/** → ADMIN, CHECKER
+  const canCreate = true;                       // All authenticated users
+  const canDelete = isAdmin || isChecker;       // ADMIN, CHECKER
+  const canEdit = isAdmin || isMaker;           // ADMIN, MAKER
 
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
@@ -60,6 +71,7 @@ export default function BeneficiariesListPage() {
             Register and manage transfer payees linked to your banking customers.
           </p>
         </div>
+        {/* ADD: All authenticated users can add beneficiaries */}
         <Link
           href="/beneficiaries/new"
           className="inline-flex items-center justify-center px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-all"
@@ -143,18 +155,29 @@ export default function BeneficiariesListPage() {
                         className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
                       >
                         <Eye className="w-3.5 h-3.5 mr-1 text-slate-500" />
-                        View / Edit
+                        {canEdit ? "View / Edit" : "View"}
                       </Link>
-                      <button
-                        onClick={() => {
-                          setDeleteTargetId(b.id);
-                          setDeleteTargetName(b.name);
-                        }}
-                        className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 mr-1" />
-                        Delete
-                      </button>
+                      {/* DELETE: ADMIN + CHECKER only */}
+                      {canDelete ? (
+                        <button
+                          onClick={() => {
+                            setDeleteTargetId(b.id);
+                            setDeleteTargetName(b.name);
+                          }}
+                          className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mr-1" />
+                          Delete
+                        </button>
+                      ) : (
+                        <span
+                          className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-slate-300 bg-slate-50 rounded-lg cursor-not-allowed border border-slate-100"
+                          title="Delete beneficiaries requires Admin or Checker role (Maker cannot delete)"
+                        >
+                          <Lock className="w-3 h-3 mr-1" />
+                          Delete
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

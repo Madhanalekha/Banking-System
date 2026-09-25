@@ -1,4 +1,4 @@
-# GCT Banking System
+# Banking System
 
 A robust, enterprise-ready **Spring Boot Banking REST API** developed as part of the **GCT Training Program**. The system provides comprehensive banking operations including Customer Management, Account Management, Transaction Processing (Deposits & Withdrawals with balance consistency and audit logs), and Beneficiary Management.
 

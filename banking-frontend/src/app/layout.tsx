@@ -7,7 +7,7 @@ import { Sidebar } from "@/components/Sidebar";
 
 export const metadata: Metadata = {
   title: "Bank App",
-  description: "Next.js Open Banking & Core Ledger Management Frontend",
+  description: "Open Banking & Core Ledger Management Frontend",
 };
 
 export default function RootLayout({

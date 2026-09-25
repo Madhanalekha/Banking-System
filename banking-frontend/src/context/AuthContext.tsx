@@ -56,25 +56,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isChecker = roles.some((r) => r.toLowerCase() === "checker");
   const isAuthenticated = !!token && !!user;
 
-  // On initial load, restore session from localStorage
+  // Restore a real Keycloak session from localStorage.
   useEffect(() => {
     try {
       const storedToken = localStorage.getItem(TOKEN_KEY);
       const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
       const storedUser = localStorage.getItem(USER_KEY);
-
       if (storedToken && storedUser) {
         const payload = parseJwt(storedToken);
-        const isExpired = payload?.exp ? payload.exp * 1000 < Date.now() : false;
+        const isExpired = !payload || (payload.exp ? payload.exp * 1000 < Date.now() : false);
 
         if (isExpired) {
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem(REFRESH_TOKEN_KEY);
           localStorage.removeItem(USER_KEY);
+          document.cookie = "bank_auth_session=; path=/; max-age=0";
         } else {
           setToken(storedToken);
           setRefreshToken(storedRefreshToken);
           setUser(JSON.parse(storedUser));
+          document.cookie = `bank_auth_session=true; path=/; max-age=${60 * 60 * 8}`;
         }
       }
     } catch {
@@ -93,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
 
-    // Clear session cookie so middleware redirects to login
+    // Clear the session cookie before redirecting to Keycloak logout.
     document.cookie = "bank_auth_session=; path=/; max-age=0";
 
     setToken(null);

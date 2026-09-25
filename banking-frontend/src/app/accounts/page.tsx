@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Trash2,
   TrendingUp,
+  Lock,
 } from "lucide-react";
 import { useAccounts, useDeleteAccount } from "@/hooks/useAccounts";
 import { Loading } from "@/components/Loading";
@@ -17,10 +18,17 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AccountType } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AccountsListPage() {
   const { data: accounts, isLoading, error, refetch } = useAccounts();
   const deleteAccountMutation = useDeleteAccount();
+  const { isAdmin, isMaker, isChecker } = useAuth();
+
+  // Role-based permissions
+  const canCreate = isAdmin || isMaker;  // ADMIN, MAKER
+  const canDelete = isAdmin;             // ADMIN only
+  const isReadOnly = isChecker && !isAdmin && !isMaker;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
@@ -63,13 +71,20 @@ export default function AccountsListPage() {
             Manage deposit savings and current accounts linked to registered customers.
           </p>
         </div>
-        <Link
-          href="/accounts/new"
-          className="inline-flex items-center justify-center px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-all"
-        >
-          <PlusCircle className="w-4 h-4 mr-2" />
-          Open New Account
-        </Link>
+        {canCreate ? (
+          <Link
+            href="/accounts/new"
+            className="inline-flex items-center justify-center px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-all"
+          >
+            <PlusCircle className="w-4 h-4 mr-2" />
+            Open New Account
+          </Link>
+        ) : (
+          <div className="inline-flex items-center px-4 py-2.5 bg-slate-100 text-slate-400 text-sm font-semibold rounded-xl cursor-not-allowed border border-slate-200" title="Checker role: read-only access">
+            <Lock className="w-4 h-4 mr-2" />
+            View Only
+          </div>
+        )}
       </div>
 
       {error && (
@@ -161,16 +176,26 @@ export default function AccountsListPage() {
                       >
                         Ledger & Details <ArrowRight className="w-3 h-3 ml-1" />
                       </Link>
-                      <button
-                        onClick={() => {
-                          setDeleteTargetId(account.id);
-                          setDeleteTargetNumber(account.accountNumber);
-                        }}
-                        className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 mr-1" />
-                        Delete
-                      </button>
+                      {canDelete ? (
+                        <button
+                          onClick={() => {
+                            setDeleteTargetId(account.id);
+                            setDeleteTargetNumber(account.accountNumber);
+                          }}
+                          className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mr-1" />
+                          Delete
+                        </button>
+                      ) : (
+                        <span
+                          className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-slate-300 bg-slate-50 rounded-lg cursor-not-allowed border border-slate-100"
+                          title={`Delete requires Admin role (your role: ${isChecker ? 'Checker' : 'Maker'})`}
+                        >
+                          <Lock className="w-3 h-3 mr-1" />
+                          Delete
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

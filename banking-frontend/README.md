@@ -1,4 +1,4 @@
-# Banfico Banking System — Frontend Application
+# Banking System — Frontend Application
 
 A modern, responsive, and robust **Banking & Open Banking frontend interface** built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, **TanStack React Query**, **Axios**, **React Hook Form**, and **Zod**.
 
@@ -28,7 +28,7 @@ This frontend communicates directly with the **Spring Boot Core Banking REST API
 - **Dashboard**: Real-time overview of total customers, total accounts, total ledger funds, beneficiary count, and live health status of the Spring Boot API and PostgreSQL database.
 - **Authentication & Security**:
   - Secure login/logout via Keycloak OAuth2 / OpenID Connect.
-  - Role-Based Access Control (RBAC) supporting Admin, Maker, Checker, and User roles.
+  - Role-Based Access Control (RBAC) supporting Admin, Maker and Checker roles.
   - Persistent auth state managed via React Context and `localStorage`.
   - Protected routes utilizing Next.js Edge Middleware.
 - **User Profile**: Top navigation and sidebar profile components displaying user initials, roles, and quick logout actions.
@@ -138,10 +138,6 @@ banking-frontend/
 │       ├── accountSchema.ts
 │       ├── transactionSchema.ts
 │       └── beneficiarySchema.ts
-│
-├── middleware-examples/              # Express Middleware Learning Concepts
-│   ├── express-middleware-demo.js    # Runnable Express middleware demo script
-│   └── middleware-comparison.md      # Express vs Next.js middleware guide
 │
 ├── .env.local                        # Configured environment variables
 ├── package.json
@@ -273,7 +269,7 @@ Forms utilize React Hook Form connected with Zod schemas:
 The frontend implements a robust OAuth2 authorization code flow using **Keycloak**:
 
 1. **Authentication State**: Managed globally via `AuthContext.tsx`. The access token (JWT) is stored securely in `localStorage` and automatically attached to outbound API requests via Axios interceptors.
-2. **Role-Based Access Control (RBAC)**: The application reads the `realm_access.roles` claim from the decoded JWT to determine user privileges (`admin`, `maker`, `checker`, `user`).
+2. **Role-Based Access Control (RBAC)**: The application reads the `realm_access.roles` claim from the decoded JWT to determine user privileges (`admin`, `maker`, `checker`).
 3. **Route Protection**: Next.js `middleware.ts` intercepts requests. If a user is unauthenticated, they are redirected to the Keycloak login page or a designated login prompt.
 4. **User Profile & Logout**: Both the `Navbar` and `Sidebar` feature dynamic user profile displays that show the authenticated user's name, initials, and assigned roles, along with one-click **Logout** functionality to clear sessions and return to the login view.
 
@@ -285,11 +281,11 @@ Ensure your Spring Boot backend is running on `http://localhost:8080` before tes
 
 1. **Dashboard Check**: Navigate to `/` $\to$ Verify API and PostgreSQL status badges display `UP`.
 2. **Customer Flow**:
-   - Go to `/customers/new` $\to$ Create customer `"Madhan Kumar"`, `"madhan@example.com"`, `"9876543210"`.
+   - Go to `/customers/new` $\to$ Create customer `"Madhan"`, `"madhan@example.com"`, `"9876543210"`.
    - Verify customer appears on `/customers`.
    - Click customer $\to$ View details and update residential address.
 3. **Account Flow**:
-   - Go to `/accounts/new` $\to$ Select customer `"Madhan Kumar"`, Account `"ACC100001"`, `SAVINGS`, Initial Balance `5000`.
+   - Go to `/accounts/new` $\to$ Select customer `"Madhan"`, Account `"ACC100001"`, `SAVINGS`, Initial Balance `5000`.
    - Verify account is listed on `/accounts` with balance `₹5,000.00`.
 4. **Transaction Ledger Flow**:
    - Go to `/transactions/new` $\to$ Select `"ACC100001"`, choose `DEPOSIT`, Amount `2500` $\to$ Submit.
@@ -297,6 +293,6 @@ Ensure your Spring Boot backend is running on `http://localhost:8080` before tes
    - Submit `WITHDRAW` for `1500` $\to$ Balance decreased to `₹6,000.00`.
    - Test Overdraft: Attempt `WITHDRAW` for `100000` $\to$ Verify error banner displays *"Insufficient balance for withdrawal"*.
 5. **Beneficiary Flow**:
-   - Go to `/beneficiaries/new` $\to$ Link to `"Madhan Kumar"`, Name `"Rahul Sharma"`, Account `"ACC200001"`, Bank `"SBI"`, IFSC `"SBIN0001234"`.
+   - Go to `/beneficiaries/new` $\to$ Link to `"Madhan"`, Name `"Rahul Sharma"`, Account `"ACC200001"`, Bank `"SBI"`, IFSC `"SBIN0001234"`.
    - Verify listed on `/beneficiaries`.
    - Test Duplicate: Attempt to add another beneficiary with the same account number for the same customer $\to$ Verify `409 Conflict` error is handled cleanly.

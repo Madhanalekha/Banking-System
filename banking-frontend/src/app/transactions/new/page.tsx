@@ -43,15 +43,22 @@ function NewTransactionForm() {
     },
   });
 
-  useEffect(() => {
-    if (preselectedAccountId && accounts) {
-      setValue("accountId", Number(preselectedAccountId));
-    }
-  }, [preselectedAccountId, accounts, setValue]);
-
   const watchedAccountId = watch("accountId");
   const watchedType = watch("transactionType");
   const watchedAmount = watch("amount") || 0;
+
+  useEffect(() => {
+    if (preselectedAccountId && accounts) {
+      const exists = accounts.some((acc) => acc.id === Number(preselectedAccountId));
+      if (exists) {
+        setValue("accountId", Number(preselectedAccountId));
+      } else if (accounts.length > 0) {
+        setValue("accountId", accounts[0].id);
+      }
+    } else if (accounts && accounts.length > 0 && !watchedAccountId) {
+      setValue("accountId", accounts[0].id);
+    }
+  }, [preselectedAccountId, accounts, setValue, watchedAccountId]);
 
   const selectedAccount = accounts?.find(
     (acc) => acc.id === Number(watchedAccountId)
